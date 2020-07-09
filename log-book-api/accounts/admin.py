@@ -20,6 +20,7 @@ class UserAdmin(BaseUserAdmin):
         "last_name",
         "date_joined",
         "is_active",
+        "is_staff",
     )
     list_filter = ("is_active",)
 
