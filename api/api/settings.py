@@ -27,7 +27,7 @@ SECRET_KEY = "9nr+x&s6xyj4cty(4#k-!mpr@oszdo2+!j3_$ui5(i-g&=iw-d"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "e-log-book-api.herokuapp.com"]
 
 
 # Application definition

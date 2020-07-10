@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 project_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-load_dotenv(os.path.join(project_folder, "e-log-book-api/.env"))
+load_dotenv(os.path.join(project_folder, "api/.env"))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
 
