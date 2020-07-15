@@ -4,12 +4,14 @@ from rest_framework.authtoken import views
 from django.urls import include, path
 from django.contrib import admin
 
-# project level imoprts
-from accounts.views import UserViewSet
+# project level imports
+from accounts.views import UserViewSet, UserLoginViewSet, UserRegisterViewSet
 
 router = DefaultRouter()
 
 router.register(r"accounts/users", UserViewSet, basename="user")
+router.register(r"accounts", UserRegisterViewSet, basename="register")
+router.register(r"accounts", UserLoginViewSet, basename="login")
 
 urlpatterns = [
     path("api/", include((router.urls, "api"), namespace="")),

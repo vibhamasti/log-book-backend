@@ -2,7 +2,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-
 # app level imports
 from .models import User
 from .forms import UserChangeForm, UserCreationForm
@@ -10,6 +9,10 @@ from .forms import UserChangeForm, UserCreationForm
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    """
+    User model class.
+    """
+
     form = UserChangeForm
     add_form = UserCreationForm
 
