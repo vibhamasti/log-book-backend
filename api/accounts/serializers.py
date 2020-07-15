@@ -1,15 +1,15 @@
+# python imports
+import logging
+
 # django imports
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.utils.translation import ugettext_lazy as _
-from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.contrib.auth import authenticate
 
 # app level imports
 from .models import User
 
-# python imports
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,6 @@ class UserRegisterSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=30, required=False)
 
     def save(self):
-        logger.error("inside save serializer")
         user = User(
             mobile=self.validated_data["mobile"], email=self.validated_data["email"]
         )
@@ -51,37 +50,32 @@ class UserRegisterSerializer(serializers.Serializer):
         return user
 
 
-class UserLoginSerializer(serializers.ModelSerializer):
-    # token = serializers.CharField(allow_blank=True, read_only=True)
-    mobile = serializers.IntegerField(min_value=1000000000, max_value=9999999999)
-    email = serializers.EmailField(label=_("Email address"))
+class UserLoginSerializer(serializers.Serializer):
+    mobile = serializers.IntegerField(
+        label=_("Mobile"), min_value=1000000000, max_value=9999999999
+    )
+    password = serializers.CharField(
+        label=_("Password"), style={"input_type": "password"}, trim_whitespace=False
+    )
 
-    class Meta:
-        model = User
-        fields = ["mobile", "email", "password"]
-        extra_kwargs = {"password": {"write_only": True}}
+    def validate(self, attrs):
+        mobile = attrs.get("mobile")
+        password = attrs.get("password")
 
-    def validate(self, data):
-        email = data.get("email", None)
-        mobile = data.get("mobile", None)
-        password = data.get("password")
-        user = None
+        if mobile and password:
+            user = authenticate(
+                request=self.context.get("request"), username=mobile, password=password
+            )
 
-        if not mobile and not email:
-            raise ValidationError("A mobile number or email is required for login.")
-
-        user = User.objects.filter(Q(email=email) | Q(mobile=mobile)).distinct()
-        user = user.exclude(email__isnull=True).exclude(email__iexact="")
-
-        if user.exists() and user.count() == 1:
-            user = user.first()
+            # The authenticate call simply returns None for is_active=False
+            # users. (Assuming the default ModelBackend authentication
+            # backend.)
+            if not user:
+                msg = _("Unable to log in with provided credentials.")
+                raise serializers.ValidationError(msg, code="authorization")
         else:
-            raise ValidationError("This mobile number/email is invalid.")
+            msg = _('Must include "mobile" and "password".')
+            raise serializers.ValidationError(msg, code="authorization")
 
-        if user is not None:
-            if not user.check_password(password):
-                raise ValidationError("Incorrect credentials.")
-
-        # data["token"] = 'my token'
-
-        return data
+        attrs["user"] = user
+        return attrs

@@ -3,6 +3,10 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.compat import coreapi, coreschema
+from rest_framework.schemas import ManualSchema
 
 # app level imports
 from .models import User
@@ -20,6 +24,10 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class UserRegisterViewSet(viewsets.GenericViewSet):
+    """
+    A viewset for registering users.
+    """
+
     serializer_class = UserRegisterSerializer
     queryset = User.objects.all()
     permission_classes = [AllowAny]
@@ -35,6 +43,8 @@ class UserRegisterViewSet(viewsets.GenericViewSet):
                 data["response"] = "Successfully created new user"
                 data["mobile"] = user.mobile
                 data["email"] = user.email
+                token = Token.objects.get(user=user).key
+                data["token"] = token
             else:
                 data = serializer.errors
         else:
@@ -42,26 +52,46 @@ class UserRegisterViewSet(viewsets.GenericViewSet):
         return Response(data)
 
 
-class UserLoginViewSet(viewsets.GenericViewSet):
-    """ A viewset for logging users in. """
+class UserLoginViewSet(viewsets.GenericViewSet, ObtainAuthToken):
+    """
+    A viewset for logging users in.
+    """
 
     serializer_class = UserLoginSerializer
     queryset = User.objects.all()
     permission_classes = [AllowAny]
 
+    if coreapi is not None and coreschema is not None:
+        schema = ManualSchema(
+            fields=[
+                coreapi.Field(
+                    name="mobile",
+                    required=True,
+                    location="form",
+                    schema=coreschema.String(
+                        title="Mobile", description="Valid mobile for authentication"
+                    ),
+                ),
+                coreapi.Field(
+                    name="password",
+                    required=True,
+                    location="form",
+                    schema=coreschema.String(
+                        title="Password",
+                        description="Valid password for authentication",
+                    ),
+                ),
+            ],
+            encoding="application/json",
+        )
+
     @action(methods=["POST"], detail=False, url_path="")
     def login(self, request):
         if request.method == "POST":
-            serializer = UserLoginSerializer(data=request.data)
-            data = {}
-
-            if serializer.is_valid():
-                user = serializer.save()
-                data["response"] = "Successfully created new user"
-                data["mobile"] = user.mobile
-                data["email"] = user.email
-            else:
-                data = serializer.errors
-        else:
-            data = {}
-        return Response(data)
+            serializer = self.serializer_class(
+                data=request.data, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            user = serializer.validated_data["user"]
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key})
