@@ -21,11 +21,9 @@ The secret key used in this project is just for testing purposes; it will be cha
 3. To confirm if you are in the virtual environment:
 
    - On Mac and Linux, `which python`
-
       Should return `.../venv/bin/python`
 
    - On Windows, `where python`
-
       Should return `.../venv/bin/python.exe`
 
 4. Run `pip install -r requirements.txt`
