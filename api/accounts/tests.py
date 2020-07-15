@@ -1,47 +1,146 @@
-from django.test import TestCase  # noqa
+# python imports
+import json
 
-""" from django.contrib.auth import get_user_model """
+# django imports
+from django.test import TestCase
+from django.urls import reverse
+from django.contrib.auth import get_user_model
+from rest_framework.test import APITestCase
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 
 
-""" class UsersManagersTests(TestCase):
+User = get_user_model()
 
+
+class UserTest(TestCase):
     def test_create_user(self):
-        User = get_user_model()
-        user = User.objects.create_user(mobile=5555555555, email='normal@user.com', password='foo')
-        self.assertEqual(user.email, 'normal@user.com')
-        self.assertEqual(user.mobile, 5555555555)
-        self.assertTrue(user.is_active)
-        self.assertFalse(user.is_staff)
-        self.assertFalse(user.is_superuser)
-        try:
-            # username is None for the AbstractUser option
-            # username does not exist for the AbstractBaseUser option
-            self.assertIsNone(user.username)
-        except AttributeError:
-            pass
-        with self.assertRaises(TypeError):
-            User.objects.create_user()
-        with self.assertRaises(TypeError):
-            User.objects.create_user(mobile=None)
-        with self.assertRaises(TypeError):
-            User.objects.create_user(email='')
-        with self.assertRaises(ValueError):
-            User.objects.create_user(email='', password="foo")
+        user = User.objects.create(
+            mobile=1111111111, email="test@api.com", password="password"
+        )
 
-    def test_create_superuser(self):
-        User = get_user_model()
-        admin_user = User.objects.create_superuser(5555555555, 'super@user.com', 'foo')
-        self.assertEqual(admin_user.email, 'super@user.com')
+        account = User.objects.get(pk=1)
+        self.assertEqual(user, account)
 
-        self.assertTrue(admin_user.is_active)
-        self.assertTrue(admin_user.is_staff)
-        self.assertTrue(admin_user.is_superuser)
-        try:
-            # username is None for the AbstractUser option
-            # username does not exist for the AbstractBaseUser option
-            self.assertIsNone(admin_user.username)
-        except AttributeError:
-            pass
-        with self.assertRaises(ValueError):
-            User.objects.create_superuser(
-                email='super@user.com', password='foo', is_superuser=False) """
+
+class UserRegisterAPITest(APITestCase):
+    url = reverse("api:register-register")
+
+    def test_invalid_password(self):
+        """
+        Test to verify passwords in post call
+        """
+        user_data = {
+            "mobile": 1111111111,
+            "email": "test@api.com",
+            "password1": "password",
+            "password2": "different_password",
+        }
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_unique_fields(self):
+        """
+        Test to verify unique fields in post call
+        """
+
+        user1_data = {
+            "mobile": 1111111111,
+            "email": "test@api.com",
+            "password1": "password",
+            "password2": "password",
+        }
+
+        response = self.client.post(self.url, user1_data)
+        self.assertEqual(HTTP_201_CREATED, response.status_code)
+
+        user2_data = {
+            "mobile": 1111111111,
+            "email": "test2@api.com",
+            "password1": "password",
+            "password2": "password",
+        }
+
+        response = self.client.post(self.url, user2_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+        user2_data = {
+            "mobile": 2222222222,
+            "email": "test@api.com",
+            "password1": "password",
+            "password2": "password",
+        }
+
+        response = self.client.post(self.url, user2_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_required_fields(self):
+        """
+        Test to verify required fields
+        """
+        user_data = {
+            "email": "test@api.com",
+            "password1": "password",
+            "password2": "password",
+        }
+
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+        user_data = {
+            "mobile": 1111111111,
+            "password1": "password",
+            "password2": "password",
+        }
+
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_user_register(self):
+        """
+        Test to verify post call with valid user data.
+        """
+        user_data = {
+            "mobile": 1111111111,
+            "email": "test@api.com",
+            "password1": "password",
+            "password2": "password",
+        }
+
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_201_CREATED, response.status_code)
+        self.assertTrue("token" in json.loads(response.content))
+
+
+class UserLoginAPITest(APITestCase):
+    url = reverse("api:login-login")
+
+    def setUp(self):
+        self.user = User.objects.create(
+            mobile=1111111111, email="test@api.com", password="password"
+        )
+
+    def test_wrong_password(self):
+        """
+        Test for checking if password is entered wrong.
+        """
+        user_data = {"mobile": 1111111111, "password": "wrong_password"}
+
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_required_fields(self):
+        """
+        Test for checking if required fields are entered.
+        """
+
+        user_data = {"mobile": 1111111111}
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+        user_data = {"password": "password"}
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+        user_data = {"email": "test@api.com", "password": "password"}
+        response = self.client.post(self.url, user_data)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)

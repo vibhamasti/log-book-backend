@@ -7,10 +7,16 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.compat import coreapi, coreschema
 from rest_framework.schemas import ManualSchema
+from rest_framework import status
 
 # app level imports
 from .models import User
 from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer
+
+# python imports
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -45,11 +51,14 @@ class UserRegisterViewSet(viewsets.GenericViewSet):
                 data["email"] = user.email
                 token = Token.objects.get(user=user).key
                 data["token"] = token
+                req_status = status.HTTP_201_CREATED
             else:
                 data = serializer.errors
+                req_status = status.HTTP_400_BAD_REQUEST
         else:
             data = {}
-        return Response(data)
+            req_status = status.HTTP_403_FORBIDDEN
+        return Response(data, status=req_status)
 
 
 class UserLoginViewSet(viewsets.GenericViewSet, ObtainAuthToken):
