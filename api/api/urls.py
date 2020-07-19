@@ -10,7 +10,7 @@ from logbook.views import LogBookViewSet
 router = DefaultRouter()
 
 router.register(r"accounts/users", UserViewSet, basename="user")
-router.register(r"logbook", LogBookViewSet, base_name="logbook")
+router.register(r"logbook", LogBookViewSet, basename="logbook")
 router.register(r"accounts", UserRegisterViewSet, basename="register")
 router.register(r"accounts", UserLoginViewSet, basename="login")
 
