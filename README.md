@@ -1,6 +1,6 @@
-# log-book
+# log-book-backend
 
-An e-log book for teachers to use in school
+The backend for a log book app for teachers to use
 
 ## Note
 
