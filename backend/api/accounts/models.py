@@ -61,4 +61,4 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.first_name
 
     def __str__(self):
-        return str(self.mobile)
+        return self.get_full_name() + "-" + str(self.mobile)
