@@ -6,7 +6,7 @@ An e-log book for teachers to use in school
 
 The secret key used in this project is just for testing purposes; it will be changed later.
 
-## Setup
+## Setup - api (backend)
 
 1. Create a virtual environment
 
