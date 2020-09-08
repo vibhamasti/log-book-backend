@@ -1,6 +1,6 @@
 # log-book-backend
 
-The backend for a log book app for teachers to use
+The backend for a log book app for teachers to use (using Django)
 
 ## Note
 
